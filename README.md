@@ -14,9 +14,30 @@ brew install waynelloyd/wcssh
 
 ## Usage
 
-Here are some examples of how to use `wcssh`.
+### Command Line Arguments
 
-### Basic Usage
+```
+wcssh [OPTIONS] [HOSTS...]
+```
+
+#### Options
+
+- `--version` - Show version information and exit
+- `--user`, `-u` - SSH username to use for all connections
+- `--port`, `-p` - SSH port to use (default: 22)
+- `--identity`, `-i` - Path to SSH private key file
+- `--ssh-opts` - Additional raw SSH options string
+- `--delay` - Delay in seconds between creating pane/tab and sending command (default: 0.2)
+- `--no-broadcast` - Disable Warp synchronized input (broadcast) - enabled by default
+- `--help`, `-h` - Show help message and exit
+
+#### Arguments
+
+- `HOSTS` - Target hosts for SSH connections (can be specified as arguments or piped from stdin). Hosts can be separated by spaces or commas, and the tool will intelligently parse them.
+
+### Examples
+
+#### Basic Usage
 
 To open a new Warp window with SSH sessions to multiple hosts in separate panes with synchronized input:
 
@@ -24,7 +45,32 @@ To open a new Warp window with SSH sessions to multiple hosts in separate panes 
 wcssh user@host1.com user@host2.com user@host3.com
 ```
 
-### Disabling Synchronized Input
+#### Flexible Host Separators
+
+Hosts can be separated by spaces, commas, or a mix of both:
+
+```sh
+wcssh host1.com,host2.com host3.com
+wcssh host1.com, host2.com, host3.com
+```
+
+#### Using SSH Options
+
+Connect with a specific user, port, and SSH key:
+
+```sh
+wcssh --user myuser --port 2222 --identity ~/.ssh/my_key host1.com host2.com
+```
+
+#### Additional SSH Options
+
+Pass additional SSH options:
+
+```sh
+wcssh --ssh-opts "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" host1.com host2.com
+```
+
+#### Disabling Synchronized Input
 
 Synchronized input is enabled by default. To disable it, use the `--no-broadcast` flag:
 
@@ -32,10 +78,18 @@ Synchronized input is enabled by default. To disable it, use the `--no-broadcast
 wcssh --no-broadcast user@host1.com user@host2.com user@host3.com
 ```
 
-### From a file
+#### From a File
 
 You can also specify a file containing a list of hosts (one per line) and pipe it to `wcssh`:
 
 ```sh
 cat /path/to/your/hosts.txt | wcssh
+```
+
+#### Custom Delay
+
+Adjust the delay between pane creation and command execution:
+
+```sh
+wcssh --delay 0.5 host1.com host2.com host3.com
 ```
