@@ -167,12 +167,13 @@ def main(argv: Optional[List[str]] = None):
         # For all but the first host, we need to move to the next pane first
         if i > 0:
             warp_cycle_panes_forward()
-            # This is a crucial delay to wait for the pane to become active before typing
-            time.sleep(args.delay)
+            # This is a crucial delay to wait for the pane to become active before typing.
+            # It's slightly longer to give the UI time to settle.
+            time.sleep(args.delay + 0.05)
 
         warp_type_and_enter(cmd)
-        # Small pause after typing to allow the ssh client to initialize
-        time.sleep(args.delay)
+        # Small pause after typing to allow the ssh client to initialize before the next UI action
+        time.sleep(args.delay + 0.1)
 
     # Enable broadcast by default unless disabled
     broadcast_enabled = False

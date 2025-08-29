@@ -6,10 +6,24 @@ A Warp-native multi-SSH launcher that opens a new window, splits panes, and enab
 
 ### Homebrew (macOS)
 
-Install via homebrew tap:
+Try the tap and install:
 
 ```sh
 brew install waynelloyd/wcssh/wcssh
+```
+
+If that fails, follow the instructions below:
+
+First, tap the formula repository:
+
+```sh
+brew tap waynelloyd/wcssh
+```
+
+Then, install the formula:
+
+```sh
+brew install wcssh
 ```
 
 ## Usage
