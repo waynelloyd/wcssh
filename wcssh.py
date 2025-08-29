@@ -53,26 +53,27 @@ def warp_enable_broadcast():
     time.sleep(0.1)
 
 
-def read_hosts_from_stdin() -> List[str]:
-    if sys.stdin.isatty():
-        return []
-    data = sys.stdin.read()
-    raw = [p.strip() for p in data.replace("\n", ",").replace("\t", ",").split(",")]
-    return [h for h in raw if h]
+def get_all_hosts(cli_hosts: Optional[List[str]]) -> List[str]:
+    """
+    Reads hosts from stdin and CLI arguments, then parses and flattens them into a single list.
+    Handles hosts separated by spaces, commas, or newlines.
+    """
+    all_inputs = cli_hosts or []
+
+    # Read from stdin if available and add it to our list of inputs
+    if not sys.stdin.isatty():
+        all_inputs.append(sys.stdin.read())
+
+    # Process all inputs together
+    full_text = " ".join(all_inputs)
+    # Replace commas and newlines with spaces for consistent splitting
+    processed_text = full_text.replace(",", " ").replace("\n", " ")
+
+    # Split by whitespace and filter out any empty strings that result
+    return [host.strip() for host in processed_text.split() if host.strip()]
 
 
-def parse_and_flatten_hosts(hosts_list: List[str]) -> List[str]:
-    """Takes a list of strings and splits them by space or comma, returning a flat list of hosts."""
-    if not hosts_list:
-        return []
-    
-    all_hosts_str = " ".join(hosts_list)
-    all_hosts_str = all_hosts_str.replace(",", " ")
-    
-    return [host.strip() for host in all_hosts_str.split() if host.strip()]
-
-
-def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+def create_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="wcssh — Warp multi-SSH launcher (macOS)")
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     p.add_argument("hosts", nargs="*", help="Target hosts")
@@ -86,7 +87,7 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         action="store_true",
         help="Disable Warp synchronized input (broadcast) - enabled by default",
     )
-    return p.parse_args(argv)
+    return p
 
 
 def build_ssh_command(host: str, user: Optional[str], port: str, identity: Optional[str], ssh_opts: str) -> str:
@@ -99,27 +100,25 @@ def build_ssh_command(host: str, user: Optional[str], port: str, identity: Optio
     if ssh_opts:
         parts += shlex.split(ssh_opts)
     parts += [target]
-    return " ".join(shlex.quote(p) for p in parts)
+    # shlex.join is the modern, correct way to join shell arguments (Python 3.8+)
+    return shlex.join(parts)
 
 
 def main(argv: Optional[List[str]] = None):
     if sys.platform != "darwin":
         print("This script only runs on macOS.", file=sys.stderr)
         sys.exit(2)
+    
+    parser = create_arg_parser()
+    args = parser.parse_args(argv)
 
-    args = parse_args(argv)
-    stdin_hosts = read_hosts_from_stdin()
-    cli_hosts = parse_and_flatten_hosts(args.hosts or [])
-    hosts = stdin_hosts + cli_hosts
+    hosts = get_all_hosts(args.hosts)
     if not hosts:
-        # If no hosts are provided, and version is requested, let argparse handle it.
-        if not (len(sys.argv) > 1 and sys.argv[1] == '--version'):
-             print("No hosts provided.", file=sys.stderr)
-             sys.exit(1)
-        else:
-            # argparse with action='version' will exit here, so we don't need to.
-            pass
-
+        # argparse handles --version and --help automatically.
+        # If we are here, it means no hosts were provided.
+        print("Error: No hosts provided.", file=sys.stderr)
+        parser.print_help(sys.stderr)
+        sys.exit(1)
 
     ssh_cmds = [build_ssh_command(h, args.user, args.port, args.identity, args.ssh_opts) for h in hosts]
 
