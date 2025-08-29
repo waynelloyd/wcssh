@@ -143,14 +143,16 @@ def main(argv: Optional[List[str]] = None):
         time.sleep(args.delay)
 
     # Enable broadcast by default unless disabled
+    broadcast_enabled = False
     if not args.no_broadcast and len(ssh_cmds) > 1:
         time.sleep(1.0)  # Give more time for all panes to be ready
         warp_enable_broadcast()
-        print("Warp synchronized input (broadcast) enabled for all panes.")
+        broadcast_enabled = True
 
-    if hosts:
-        print(f"Launched {len(hosts)} SSH sessions in a new Warp window. "
-              "Ensure Warp has Accessibility permissions.")
+    print(f"\nLaunched {len(hosts)} SSH sessions in a new Warp window.")
+    if broadcast_enabled:
+        print("Warp synchronized input (broadcast) has been enabled.")
+    print("Note: Ensure Warp has 'Accessibility' permissions in System Settings for full functionality.")
 
 
 if __name__ == "__main__":
