@@ -10,7 +10,7 @@ import sys
 import time
 from typing import List, Optional
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 
 def run_applescript(script: str) -> subprocess.CompletedProcess:
