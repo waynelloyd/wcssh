@@ -10,7 +10,7 @@ import sys
 import time
 from typing import List, Optional
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 
 def run_applescript(script: str) -> subprocess.CompletedProcess:
@@ -96,21 +96,28 @@ def create_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Disable Warp synchronized input (broadcast) - enabled by default",
     )
+    p.add_argument(
+        "--save-history",
+        action="store_true",
+        help="Allow SSH commands to be saved to shell history (disabled by default)",
+    )
     return p
 
 
-def build_ssh_command(host: str, user: Optional[str], port: str, identity: Optional[str], ssh_opts: str) -> str:
+def build_ssh_command(host: str, user: Optional[str], port: str, identity: Optional[str], ssh_opts: str, save_history: bool) -> str:
     target = f"{user}@{host}" if user else host
-    parts = ["ssh"]
+    ssh_parts = ["ssh"]
     if port:
-        parts += ["-p", str(port)]
+        ssh_parts += ["-p", str(port)]
     if identity:
-        parts += ["-i", identity]
+        ssh_parts += ["-i", identity]
     if ssh_opts:
-        parts += shlex.split(ssh_opts)
-    parts += [target]
+        ssh_parts += shlex.split(ssh_opts)
+    ssh_parts += [target]
     # shlex.join is the modern, correct way to join shell arguments (Python 3.8+)
-    return shlex.join(parts)
+    ssh_command = shlex.join(ssh_parts)
+
+    return ssh_command if save_history else f"unset HISTFILE && {ssh_command}"
 
 
 def main(argv: Optional[List[str]] = None):
@@ -129,7 +136,7 @@ def main(argv: Optional[List[str]] = None):
         parser.print_help(sys.stderr)
         sys.exit(1)
 
-    ssh_cmds = [build_ssh_command(h, args.user, args.port, args.identity, args.ssh_opts) for h in hosts]
+    ssh_cmds = [build_ssh_command(h, args.user, args.port, args.identity, args.ssh_opts, args.save_history) for h in hosts]
 
     # Open a new Warp window
     warp_new_window()

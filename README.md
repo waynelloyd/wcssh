@@ -29,6 +29,7 @@ wcssh [OPTIONS] [HOSTS...]
 - `--ssh-opts` - Additional raw SSH options string
 - `--delay` - Base delay in seconds between UI actions (default: 0.1)
 - `--no-broadcast` - Disable Warp synchronized input (broadcast) - enabled by default
+- `--save-history` - Allow SSH commands to be saved to shell history (disabled by default)
 - `--help`, `-h` - Show help message and exit
 
 #### Arguments
