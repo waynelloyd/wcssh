@@ -4,18 +4,12 @@ A Warp-native multi-SSH launcher that opens a new window, splits panes, and enab
 
 ## Installation
 
-### Homebrew (macOS & Linux)
+### Homebrew (macOS)
 
-First, tap the formula repository:
-
-```sh
-brew tap <your-username>/wcssh
-```
-
-Then, you can install `wcssh`:
+Install `wcssh` using Homebrew:
 
 ```sh
-brew install wcssh
+brew install waynelloyd/wcssh
 ```
 
 ## Usage
@@ -40,8 +34,8 @@ wcssh --no-broadcast user@host1.com user@host2.com user@host3.com
 
 ### From a file
 
-You can also specify a file containing a list of hosts (one per line):
+You can also specify a file containing a list of hosts (one per line) and pipe it to `wcssh`:
 
 ```sh
-wcssh --hosts-file /path/to/your/hosts.txt
+cat /path/to/your/hosts.txt | wcssh
 ```

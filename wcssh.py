@@ -10,6 +10,8 @@ import sys
 import time
 from typing import List, Optional
 
+__version__ = "0.1.0"
+
 
 def run_applescript(script: str) -> subprocess.CompletedProcess:
     return subprocess.run(
@@ -61,6 +63,7 @@ def read_hosts_from_stdin() -> List[str]:
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="wcssh — Warp multi-SSH launcher (macOS)")
+    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     p.add_argument("hosts", nargs="*", help="Target hosts")
     p.add_argument("--user", "-u", help="SSH username")
     p.add_argument("--port", "-p", default="22", help="SSH port (default 22)")
@@ -97,8 +100,14 @@ def main(argv: Optional[List[str]] = None):
     stdin_hosts = read_hosts_from_stdin()
     hosts = stdin_hosts + (args.hosts or [])
     if not hosts:
-        print("No hosts provided.", file=sys.stderr)
-        sys.exit(1)
+        # If no hosts are provided, and version is requested, let argparse handle it.
+        if not (len(sys.argv) > 1 and sys.argv[1] == '--version'):
+             print("No hosts provided.", file=sys.stderr)
+             sys.exit(1)
+        else:
+            # argparse with action='version' will exit here, so we don't need to.
+            pass
+
 
     ssh_cmds = [build_ssh_command(h, args.user, args.port, args.identity, args.ssh_opts) for h in hosts]
 
@@ -109,8 +118,9 @@ def main(argv: Optional[List[str]] = None):
     time.sleep(0.05)
 
     # Type first SSH command in the first pane
-    warp_type_and_enter(ssh_cmds[0])
-    time.sleep(args.delay)
+    if ssh_cmds:
+        warp_type_and_enter(ssh_cmds[0])
+        time.sleep(args.delay)
 
     # Split panes for remaining hosts
     for cmd in ssh_cmds[1:]:
@@ -122,13 +132,14 @@ def main(argv: Optional[List[str]] = None):
         time.sleep(args.delay)
 
     # Enable broadcast by default unless disabled
-    if not args.no_broadcast:
+    if not args.no_broadcast and len(ssh_cmds) > 1:
         time.sleep(1.0)  # Give more time for all panes to be ready
         warp_enable_broadcast()
         print("Warp synchronized input (broadcast) enabled for all panes.")
 
-    print(f"Launched {len(hosts)} SSH sessions in a new Warp window. "
-          "Ensure Warp has Accessibility permissions.")
+    if hosts:
+        print(f"Launched {len(hosts)} SSH sessions in a new Warp window. "
+              "Ensure Warp has Accessibility permissions.")
 
 
 if __name__ == "__main__":
