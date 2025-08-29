@@ -46,6 +46,10 @@ def warp_cycle_panes_backward():
 
 
 def warp_type_and_enter(cmd: str):
+    # It's safer to ensure Warp is active right before typing
+    activate_warp()
+    time.sleep(0.05)
+
     safe_cmd = cmd.replace("\\", "\\\\").replace('"', '\\"')
     applescript = f'tell application "System Events" to keystroke "{safe_cmd}"'
     run_applescript(applescript)
@@ -158,14 +162,17 @@ def main(argv: Optional[List[str]] = None):
             warp_cycle_panes_backward()
             time.sleep(args.delay)
 
-    # Now, iterate through panes and type the commands
+    # Now, iterate through the panes and type the commands
     for i, cmd in enumerate(ssh_cmds):
-        warp_type_and_enter(cmd)
-        time.sleep(args.delay)  # Small pause after typing
-
-        if i < num_hosts - 1:  # Don't move after the last command
+        # For all but the first host, we need to move to the next pane first
+        if i > 0:
             warp_cycle_panes_forward()
+            # This is a crucial delay to wait for the pane to become active before typing
             time.sleep(args.delay)
+
+        warp_type_and_enter(cmd)
+        # Small pause after typing to allow the ssh client to initialize
+        time.sleep(args.delay)
 
     # Enable broadcast by default unless disabled
     broadcast_enabled = False
