@@ -27,7 +27,7 @@ wcssh [OPTIONS] [HOSTS...]
 - `--port`, `-p` - SSH port to use (default: 22)
 - `--identity`, `-i` - Path to SSH private key file
 - `--ssh-opts` - Additional raw SSH options string
-- `--delay` - Delay in seconds between creating pane/tab and sending command (default: 0.2)
+- `--delay` - Base delay in seconds between UI actions (default: 0.1)
 - `--no-broadcast` - Disable Warp synchronized input (broadcast) - enabled by default
 - `--help`, `-h` - Show help message and exit
 
@@ -88,7 +88,7 @@ cat /path/to/your/hosts.txt | wcssh
 
 #### Custom Delay
 
-Adjust the delay between pane creation and command execution:
+Adjust the base delay for UI actions. Increase this value if commands are being missed or panes are not splitting correctly:
 
 ```sh
 wcssh --delay 0.5 host1.com host2.com host3.com

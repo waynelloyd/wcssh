@@ -10,7 +10,7 @@ import sys
 import time
 from typing import List, Optional
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 
 def run_applescript(script: str) -> subprocess.CompletedProcess:
@@ -35,6 +35,16 @@ def warp_split_right():
     run_applescript('tell application "System Events" to keystroke "d" using {command down}')
 
 
+def warp_cycle_panes_forward():
+    # Cycle to the next pane (CMD+])
+    run_applescript('tell application "System Events" to keystroke "]" using {command down}')
+
+
+def warp_cycle_panes_backward():
+    # Cycle to the previous pane (CMD+[)
+    run_applescript('tell application "System Events" to keystroke "[" using {command down}')
+
+
 def warp_type_and_enter(cmd: str):
     safe_cmd = cmd.replace("\\", "\\\\").replace('"', '\\"')
     applescript = f'tell application "System Events" to keystroke "{safe_cmd}"'
@@ -46,11 +56,10 @@ def warp_type_and_enter(cmd: str):
 def warp_enable_broadcast():
     # Enable Warp synchronized input using keyboard shortcut only
     activate_warp()
-    time.sleep(0.3)
+    time.sleep(0.1)
     
     # Use keyboard shortcut: Option + Command + I
     run_applescript('tell application "System Events" to keystroke "i" using {option down, command down}')
-    time.sleep(0.1)
 
 
 def get_all_hosts(cli_hosts: Optional[List[str]]) -> List[str]:
@@ -81,7 +90,7 @@ def create_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--port", "-p", default="22", help="SSH port (default 22)")
     p.add_argument("--identity", "-i", help="Path to SSH private key")
     p.add_argument("--ssh-opts", default="", help="Additional raw ssh options string")
-    p.add_argument("--delay", type=float, default=0.2, help="Delay between creating pane/tab and sending command")
+    p.add_argument("--delay", type=float, default=0.1, help="Base delay in seconds between UI actions (default: 0.1)")
     p.add_argument(
         "--no-broadcast",
         action="store_true",
@@ -124,28 +133,37 @@ def main(argv: Optional[List[str]] = None):
 
     # Open a new Warp window
     warp_new_window()
-    time.sleep(args.delay + 0.3)  # extra delay for window to appear
+    time.sleep(args.delay + 0.15)  # extra delay for window to appear
     activate_warp()
     time.sleep(0.05)
 
-    # Type first SSH command in the first pane
-    if ssh_cmds:
-        warp_type_and_enter(ssh_cmds[0])
-        time.sleep(args.delay)
-
-    # Split panes for remaining hosts
-    for cmd in ssh_cmds[1:]:
+    # --- Phase 1: Create the pane layout ---
+    # Create N-1 panes for the N hosts.
+    num_hosts = len(ssh_cmds)
+    for _ in range(num_hosts - 1):
         warp_split_right()
-        time.sleep(args.delay + 0.25)  # ensure split pane is ready
-        activate_warp()
-        time.sleep(0.05)
+        time.sleep(args.delay + 0.1)  # Wait for the split to complete
+
+    # --- Phase 2: Navigate and execute commands ---
+    # After splitting, focus is on the last pane. Navigate back to the first pane.
+    if num_hosts > 1:
+        for _ in range(num_hosts - 1):
+            warp_cycle_panes_backward()
+            time.sleep(args.delay)
+
+    # Now, iterate through panes and type the commands
+    for i, cmd in enumerate(ssh_cmds):
         warp_type_and_enter(cmd)
-        time.sleep(args.delay)
+        time.sleep(args.delay)  # Small pause after typing
+
+        if i < num_hosts - 1:  # Don't move after the last command
+            warp_cycle_panes_forward()
+            time.sleep(args.delay)
 
     # Enable broadcast by default unless disabled
     broadcast_enabled = False
     if not args.no_broadcast and len(ssh_cmds) > 1:
-        time.sleep(1.0)  # Give more time for all panes to be ready
+        time.sleep(0.5)  # Give time for all panes to be ready
         warp_enable_broadcast()
         broadcast_enabled = True
 
