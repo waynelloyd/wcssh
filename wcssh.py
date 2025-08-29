@@ -61,6 +61,17 @@ def read_hosts_from_stdin() -> List[str]:
     return [h for h in raw if h]
 
 
+def parse_and_flatten_hosts(hosts_list: List[str]) -> List[str]:
+    """Takes a list of strings and splits them by space or comma, returning a flat list of hosts."""
+    if not hosts_list:
+        return []
+    
+    all_hosts_str = " ".join(hosts_list)
+    all_hosts_str = all_hosts_str.replace(",", " ")
+    
+    return [host.strip() for host in all_hosts_str.split() if host.strip()]
+
+
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="wcssh — Warp multi-SSH launcher (macOS)")
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
@@ -98,7 +109,8 @@ def main(argv: Optional[List[str]] = None):
 
     args = parse_args(argv)
     stdin_hosts = read_hosts_from_stdin()
-    hosts = stdin_hosts + (args.hosts or [])
+    cli_hosts = parse_and_flatten_hosts(args.hosts or [])
+    hosts = stdin_hosts + cli_hosts
     if not hosts:
         # If no hosts are provided, and version is requested, let argparse handle it.
         if not (len(sys.argv) > 1 and sys.argv[1] == '--version'):
