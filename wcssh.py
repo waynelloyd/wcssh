@@ -51,11 +51,6 @@ def warp_enable_broadcast():
     time.sleep(0.1)
 
 
-def warp_resize_to_fit_screen():
-    # Skip window resizing - let user manually resize if needed
-    pass
-
-
 def read_hosts_from_stdin() -> List[str]:
     if sys.stdin.isatty():
         return []
@@ -76,11 +71,6 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         "--no-broadcast",
         action="store_true",
         help="Disable Warp synchronized input (broadcast) - enabled by default",
-    )
-    p.add_argument(
-        "--no-resize",
-        action="store_true",
-        help="Skip resizing window to fit screen",
     )
     return p.parse_args(argv)
 
@@ -117,11 +107,6 @@ def main(argv: Optional[List[str]] = None):
     time.sleep(args.delay + 0.3)  # extra delay for window to appear
     activate_warp()
     time.sleep(0.05)
-    
-    # Resize window to fit screen unless disabled
-    if not args.no_resize:
-        warp_resize_to_fit_screen()
-        time.sleep(0.1)
 
     # Type first SSH command in the first pane
     warp_type_and_enter(ssh_cmds[0])
