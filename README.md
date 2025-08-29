@@ -9,7 +9,7 @@ A Warp-native multi-SSH launcher that opens a new window, splits panes, and enab
 Install `wcssh` using Homebrew:
 
 ```sh
-brew install waynelloyd/wcssh
+brew install waynelloyd/wcssh/wcssh
 ```
 
 ## Usage
